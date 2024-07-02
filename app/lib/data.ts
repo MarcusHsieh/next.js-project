@@ -14,7 +14,7 @@ export async function fetchRevenue() {
     // Artificially delay a response for demo purposes.
     // Don't do this in production :)
 
-    // console.log('Fetching revenue data...');
+    console.log('Fetching revenue data...');
     // await new Promise((resolve) => setTimeout(resolve, 3000));
 
     const data = await sql<Revenue>`SELECT * FROM revenue`;
@@ -30,6 +30,8 @@ export async function fetchRevenue() {
 
 export async function fetchLatestInvoices() {
   try {
+    // fetches the last 5 invoices -- sorted by date
+    // uses SQL query instead of sorting in-memory (better)
     const data = await sql<LatestInvoiceRaw>`
       SELECT invoices.amount, customers.name, customers.image_url, customers.email, invoices.id
       FROM invoices
@@ -53,19 +55,47 @@ export async function fetchCardData() {
     // You can probably combine these into a single SQL query
     // However, we are intentionally splitting them to demonstrate
     // how to initialize multiple queries in parallel with JS.
+    //  -- using SQL queries INSTEAD of JS (less data transferred during request)
+
+    // initialize promises
     const invoiceCountPromise = sql`SELECT COUNT(*) FROM invoices`;
     const customerCountPromise = sql`SELECT COUNT(*) FROM customers`;
+    /* 
+     * 1. SUM calcs sum of values returned by case statement
+     *  - if 'status' is 'paid', include 'amount' in sum
+     *  - else include '0' in sum
+     * 
+     * 2. ~~~
+     *  - if 'status' is 'pending', include 'amount' in sum
+     *  - else include '0' in sum
+     * 
+     * ==> query results in 2 columns
+     *  1. "paid" == SUM of paid invoices
+     *  2. "pending" == SUM of pending invoices
+    */ 
+
+    /*
+     * 
+     *  [FROM invoices == consider all rows from invoices table]
+     *   so therefore each SUM command iterates through the whole invoices table
+     *   and checks each row for 'paid' or 'pending'
+     */
     const invoiceStatusPromise = sql`SELECT
          SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END) AS "paid",
          SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END) AS "pending"
          FROM invoices`;
 
+    // execute all queries 
+    //  [Promise.all = execute multiple queries] 
+    //  [await = wait for all promises to resolve + store results in data arr]
     const data = await Promise.all([
       invoiceCountPromise,
       customerCountPromise,
       invoiceStatusPromise,
     ]);
 
+    // extract + process data to respective data type
+    //  [var = value ?? '0' --> var assigned value if not null/undefined, else assigned '0']
     const numberOfInvoices = Number(data[0].rows[0].count ?? '0');
     const numberOfCustomers = Number(data[1].rows[0].count ?? '0');
     const totalPaidInvoices = formatCurrency(data[2].rows[0].paid ?? '0');

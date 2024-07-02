@@ -1,3 +1,6 @@
+// should typically delete this after running/seeding the database
+// for example sake I'm keeping this here 
+
 import bcrypt from 'bcrypt';
 import { db } from '@vercel/postgres';
 import { invoices, customers, revenue, users } from '../lib/placeholder-data';
