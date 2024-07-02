@@ -2,6 +2,7 @@
 
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
+import { useDebouncedCallback } from 'use-debounce';
 
 export default function Search({ placeholder }: { placeholder: string }) {
   const searchParams = useSearchParams();
@@ -9,12 +10,15 @@ export default function Search({ placeholder }: { placeholder: string }) {
   const { replace } = useRouter();
 
   // URL is updated without reloading page -- thanks Next.js client side nav!
-  function handleSearch(term: string) {
-    // console.log(term);
+  // function handleSearch(term: string) {
+  // new debounced function can only run after user stop typing (300ms)
+  const handleSearch = useDebouncedCallback((term) => {
+    // console.log(`Searching... ${term}`);
     // `URLSearchParams`: 
     //  -- Web API providing utility methods to manipulate URL query parameters
     //  -- instead of complex string literal => `?page=1&query=a`
     const params = new URLSearchParams(searchParams); 
+    params.set('page', '1');
     if (term) {
       params.set('query', term);
     }
@@ -27,7 +31,7 @@ export default function Search({ placeholder }: { placeholder: string }) {
     //  - so if user searches for "Lee"
     //  - URL == `/dashboard/invoices?query=lee`
     replace(`${pathname}?${params.toString()}`);
-  }
+  }, 300);
 
   return (
     <div className="relative flex flex-1 flex-shrink-0">
