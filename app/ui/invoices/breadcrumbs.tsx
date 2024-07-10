@@ -8,6 +8,19 @@ interface Breadcrumb {
   active?: boolean;
 }
 
+/**
+ * 
+ *  passes in an array of labels, hrefs, and active flag
+ *  
+ *  creates : a visual trail of links to show 
+ *            user where they are in the site 
+ * 
+ *  ex : pass in [Invoices ..., Create Invoice ...]
+ *    gets : Invoices / Create Invoice
+ *            -- with "Create Invoice" darkened to 
+ *               represent the active page
+ * 
+ */
 export default function Breadcrumbs({
   breadcrumbs,
 }: {
