@@ -1,6 +1,7 @@
 import Form from "@/app/ui/invoices/edit-form";
 import Breadcrumbs from "@/app/ui/invoices/breadcrumbs";
 import { fetchInvoiceById, fetchCustomers } from '@/app/lib/data';
+import { notFound } from "next/navigation";
 
 // gets id from URL through params prop! 
 // grabs it from the dynamic route [id] 
@@ -11,6 +12,11 @@ export default async function Page({ params }: { params: { id: string } }) {
        fetchInvoiceById(id),
        fetchCustomers(), 
     ]);
+
+    // if invoice doesn't exist -- invoke notFound()
+    if (!invoice) {
+        notFound();
+    }
 
     return(
         <main>
